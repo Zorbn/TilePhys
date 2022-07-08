@@ -83,8 +83,8 @@ public class Player
         bool isMovingHorizontally = movement.Y == 0;
         
         int tileSize = isMovingHorizontally ? tileW : tileH;
-        float xOffset = isMovingHorizontally ? 0 : width;
-        float yOffset = isMovingHorizontally ? height : 0;
+        float xOffset = isMovingHorizontally ? 0 : width / tileW;
+        float yOffset = isMovingHorizontally ? height / tileH : 0;
         Vector2 offset = Vector2.Zero;
     
         // Check each tile on the rectangle's side of movement.
