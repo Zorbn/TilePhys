@@ -33,6 +33,7 @@ public class Tile
         }
     }
     
+    // TODO: Consider pushing any entities at the new position of the tile
     public bool Move(TileMap tileMap, int x, int y, int dirX, int dirY)
     {
         if (IsStatic) throw new Exception($"Cannot move static tile at ({x}, {y})!");

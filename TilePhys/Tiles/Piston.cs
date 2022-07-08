@@ -2,10 +2,7 @@
 
 public class Piston : Tile
 {
-    public Piston() : base(TileId.Conveyor, false, false, true, TileRotation.FourDirections)
-    {
-        
-    }
+    public Piston() : base(TileId.Conveyor, false, false, true, TileRotation.FourDirections) {}
 
     public override void Tick(TileMap tileMap, int x, int y, TileData data,  int tickCount)
     {

@@ -68,7 +68,7 @@ public class TileMap
 
             int tileTexX = (int)tileId;
             
-            atlas.Draw(x * TileSize, y * TileSize, tileTexX, 0, 1, 1, tileDataSets[i].Direction);
+            atlas.Draw(x * TileSize, y * TileSize, tileTexX, 0, 1, 1, false, tileDataSets[i].Direction);
         }
     }
 

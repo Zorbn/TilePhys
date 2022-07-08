@@ -2,10 +2,7 @@
 
 public class Conveyor : Tile
 {
-    public Conveyor() : base(TileId.Conveyor, false, false, true, TileRotation.TwoDirections)
-    {
-        
-    }
+    public Conveyor() : base(TileId.Conveyor, false, false, true, TileRotation.TwoDirections) {}
 
     public override void Tick(TileMap tileMap, int x, int y, TileData data, int tickCount)
     {

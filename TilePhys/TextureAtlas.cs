@@ -6,17 +6,17 @@ namespace TilePhys;
 public class TextureAtlas
 {
     public readonly int RenderScale;
+    public readonly int TileSize;
     private Texture2D texture;
-    private readonly int tileSize;
 
     public TextureAtlas(string name, int tileSize, int renderScale)
     {
         texture = Raylib.LoadTexture(name);
-        this.tileSize = tileSize;
+        this.TileSize = tileSize;
         RenderScale = renderScale;
     }
 
-    public void Draw(int x, int y, int texX, int texY, int texW, int texH, Direction direction = Direction.Right)
+    public void Draw(int x, int y, int texX, int texY, int texW, int texH, bool flipped = false, Direction direction = Direction.Right)
     {
         // Keep tiles in the same location despite rotating around the top left corner.
         int rotOffX = 0;
@@ -38,11 +38,14 @@ public class TextureAtlas
                 break;
         }
 
-        rotOffX *= RenderScale * tileSize;
-        rotOffY *= RenderScale * tileSize;
+        rotOffX *= RenderScale * TileSize;
+        rotOffY *= RenderScale * TileSize;
+
+        int srcTexW = texW * TileSize;
+        if (flipped) srcTexW *= -1;
         
-        Rectangle src = new(texX * tileSize, texY * tileSize, texW * tileSize, texH * tileSize);
-        Rectangle dst = new(rotOffX + x * RenderScale, rotOffY + y * RenderScale, texW * tileSize * RenderScale, texH * tileSize * RenderScale);
+        Rectangle src = new(texX * TileSize, texY * TileSize, srcTexW, texH * TileSize);
+        Rectangle dst = new(rotOffX + x * RenderScale, rotOffY + y * RenderScale, texW * TileSize * RenderScale, texH * TileSize * RenderScale);
         Raylib.DrawTexturePro(texture, src, dst, Vector2.Zero, (int)direction * 90f, Color.WHITE);
     }
 

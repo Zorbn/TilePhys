@@ -20,7 +20,7 @@ internal static class Program
         TileMap tileMap = new (10, 10, 8);
         tileMap.Generate();
 
-        Player player = new(0, 0, 8, 8);
+        Player player = new(0, 0, atlas.TileSize, atlas.TileSize);
 
         const float maxFrameTime = 1 / 30f;
         const float tickRate = 1 / 5f;

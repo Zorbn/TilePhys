@@ -13,9 +13,6 @@ public class Player
     private readonly int width, height;
     private int selectedTile;
     private Direction direction;
-    // Never make oldPos the same as currentPos, it will cause collision detection to hang
-    // because the algorithm won't be able to move the player towards the oldPos
-    private Vector2 oldPos;
 
     public Player(int x, int y, int width, int height)
     {
@@ -30,33 +27,29 @@ public class Player
     {
         EditTileMap(tileMap, mouseTilePos);
 
-        // TODO: Make a class for this and oldPos, which can be used for any entity
-        // make sure that class prevents oldPos from being the same as current pos
-        void MoveAndCollide(float moveX, float moveY)
-        {
-            if (moveX != 0 && moveY != 0)
-                throw new ArgumentException("Move and collide should be used in only one direction at once!");
-                    
-            if (moveX != 0 || moveY != 0) oldPos = new(x, y);
-            x += moveX;
-            y += moveY;
-            CollideWithTiles(tileMap);
-        }
-        
         float moveX = 0;
         if (Raylib.IsKeyDown(KeyboardKey.KEY_A)) moveX--;
         if (Raylib.IsKeyDown(KeyboardKey.KEY_D)) moveX++;
-        
+
+        direction = moveX switch
+        {
+            > 0 => Direction.Right,
+            < 0 => Direction.Left,
+            _ => direction
+        };
+
         moveX *= frameTime * Speed;
-        MoveAndCollide(moveX, 0);
+        moveX = GetMaxMovementOfRect(tileMap, new Vector2(moveX, 0)).X;
+        x += moveX;
         
         float moveY = frameTime * Gravity;
-        MoveAndCollide(0, moveY);
+        moveY = GetMaxMovementOfRect(tileMap, new Vector2(0, moveY)).Y;
+        y += moveY;
     }
 
     public void Draw(TextureAtlas atlas)
     {
-        atlas.Draw((int)x, (int)y, 0, 1, 1, 1);
+        atlas.Draw((int)x, (int)y, 0, 1, 1, 1, direction == Direction.Left);
         atlas.Draw(0, 0, selectedTile, 0, 1, 1);
     }
 
@@ -77,38 +70,57 @@ public class Player
         }
     }
 
-    private void CollideWithTiles(TileMap tileMap)
+    private Vector2 GetMaxMovementOfRect(TileMap tileMap, Vector2 movement)
     {
-        Vector2 offset = Vector2.Zero;
-        Vector2 dirToOldPos = oldPos - new Vector2(x, y);
-        if (dirToOldPos.Length() != 0) dirToOldPos /= dirToOldPos.Length();
-
+        if (movement.X != 0 && movement.Y != 0)
+            throw new ArgumentException("Max movement should only be used on one direction at once!");
+        
         int tileW = width / tileMap.TileSize;
         int tileH = height / tileMap.TileSize;
+    
+        Vector2 moveDir = movement / Math.Max(1, movement.Length());
+    
+        bool isMovingHorizontally = movement.Y == 0;
         
-        for (int ix = 0; ix <= tileW; ix++)
+        int tileSize = isMovingHorizontally ? tileW : tileH;
+        float xOffset = isMovingHorizontally ? 0 : width;
+        float yOffset = isMovingHorizontally ? height : 0;
+        Vector2 offset = Vector2.Zero;
+    
+        // Check each tile on the rectangle's side of movement.
+        for (int i = 0; i <= tileSize; i++)
         {
-            for (int iy = 0; iy <= tileH; iy++)
+            offset.X = i * xOffset;
+            offset.Y = i * yOffset;
+    
+            // Prevent the sideways offset from moving out of the player's hit-box by one pixel.
+            // that behavior makes sense for the forward projection which is checking where the
+            // player will be, but not for the sideways offset which should only include where
+            // the player currently is.
+            if (i == tileSize)
             {
-                offset.X = ix * (width / (float)tileW);
-                offset.Y = iy * (height / (float)tileH);
-
-                if (ix == tileW) offset.X--;
-                if (iy == tileH) offset.Y--;
-
-                while (true)
-                {
-                    int tileX = (int)((x + offset.X) / tileMap.TileSize);
-                    int tileY = (int)((y + offset.Y) / tileMap.TileSize);
-
-                    if (tileMap.GetTileId(tileX, tileY) is TileId.Air or TileId.Bedrock) break;
-
-                    // A collision has been encountered! Move back towards the character's previous position.
-                    x += dirToOldPos.X;
-                    y += dirToOldPos.Y;
-                }
+                if (isMovingHorizontally) offset.Y--;
+                else offset.X--;
             }
+            
+            Vector2 newMovement = GetMaxMovement(tileMap, movement, offset);
+    
+            // Returns the value that is least in the given direction.
+            // This method allows the player to be moved backwards if necessary,
+            // (ie: if a block falls into the player)
+            float SmallerDistance(float a, float b, float dir)
+            {
+                if (dir > 0) return MathF.Min(a, b);
+                return MathF.Max(a, b);
+            }
+    
+            // If the player is planning to move farther than this segment of its hit-box can move
+            // without colliding, reduce the amount that the player is planning to move.
+            if (isMovingHorizontally) movement.X = SmallerDistance(newMovement.X, movement.X, moveDir.X);
+            else movement.Y = SmallerDistance(newMovement.Y, movement.Y, moveDir.Y);
         }
+        
+        return movement;
     }
 
     private Vector2 GetMaxMovement(TileMap tileMap, Vector2 movement, Vector2 offset)
