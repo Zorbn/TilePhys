@@ -45,7 +45,7 @@ public class TileMap
             int x = i % width;
             int y = i / height;
             
-            if (y < groundLevel)
+            if (y > groundLevel)
             {
                 TileId tileId = TileId.Dirt;
 
